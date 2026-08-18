@@ -21,6 +21,7 @@ are *not* world-readable (`/proc/<pid>/environ` is 0400) which is exactly why
 capturing argv secrets as an unprivileged user, and optionally exfiltrating them. 
 This can be useful in CTFs or authorized engagements when LPE is seemingly exhausted but a 
 lazy script or careless root user broadcasts something you can pivot with on their command line.  
+Inspired by pspy, but built to be more lightweight.
 
 ## Features
 
