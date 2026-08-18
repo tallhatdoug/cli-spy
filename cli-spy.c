@@ -19,38 +19,6 @@
 #include <unistd.h>
 #include "seal.h"
 
-/*
- * cli-spy v2
- *
- * Changes from v1:
- *  - exfil is fully asynchronous: emit() seals + enqueues, a sender
- *    thread POSTs with backoff; the scan loop never touches the
- *    network. On shutdown, unsent findings drain for 8s, then spool
- *    to <outfile>.unsent when -o was given (0600, O_NOFOLLOW) and
- *    reload at next start. With default stdout output, unsent
- *    findings are memory-only and dropped with a stderr note: the
- *    tool never creates a file artifact the user did not ask for.
- *  - catch-all vetting: shared benign_value() rejects paths, $VARS,
- *    <placeholders>, @files, UUIDs, sha256:, ARNs and URLs for the
- *    generic flag rule and the entropy scanner.
- *  - entropy scanner is hex-aware (hash-length hex only ignored when
- *    the flag is not secret-related), checks class diversity and
- *    distinct-byte ratio, and evaluates space-form `--flag value`
- *    in addition to glued `--flag=value`.
- *  - rules loop regexec(): multiple secrets on one line all land.
- *  - new inline-keyval-secret catch-all (VAR=val / body password=x).
- *  - bin-scoped rules also match basenames of later argv tokens
- *    (covers sh -c 'curl -u a:b ...', env VAR=x curl ..., sudo).
- *  - docker/az -p rules require " login " context; curl --user=
- *    added; openssl env: no longer emitted (it captured the var
- *    NAME, not a secret); bearer header is icase, captures token.
- *  - local -o output is created 0600.
- *
- * build: cc -O2 -Wall -o cli-spy cli-spy.c seal.o tweetnacl.o -lpthread -lm
- *        (pthread is merged into libc on glibc >= 2.34; keep the flag
- *        for portability)
- */
-
 #define MAX_CMD     (64 * 1024)
 #define MAX_SECRET  1024
 #define SEEN_BITS   18u
@@ -323,14 +291,7 @@ static int http_post(const char *url, const char *body, size_t blen)
     return 0;
 }
 
-/* ---------- async exfil: queue + sender thread + optional disk spool ----------
- * emit() never blocks on the network: findings are sealed (if keyed)
- * and appended to an in-memory queue. The sender thread POSTs in
- * order with exponential backoff. Spool policy: the spool path is
- * derived from -o as "<outfile>.unsent"; with the default stdout
- * output there is NO spool and unsent findings are memory-only,
- * dropped at shutdown with a stderr note. The tool never creates a
- * file artifact the user did not ask for. */
+/* ---------- async exfil: queue + sender thread + optional disk spool ----------*/
 
 typedef struct QItem {
     struct QItem *next;
@@ -1030,8 +991,8 @@ static int selftest(void)
         fprintf(stderr, "# benign: %s\n", g_benign[i]);
         run_rules(g_benign[i], 0, getuid());
     }
-    int ok = (pos == 21) && (g_nf - pos == 0);
-    fprintf(stderr, "# selftest: %zu positive uniques (expect 21), "
+    int ok = (pos == 22) && (g_nf - pos == 0);
+    fprintf(stderr, "# selftest: %zu positive uniques (expect 22), "
             "%zu benign uniques (expect 0): %s\n",
             pos, g_nf - pos, ok ? "PASS" : "FAIL");
     return ok ? 0 : 1;
