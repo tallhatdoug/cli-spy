@@ -17,12 +17,16 @@ static: clean cli-spy
 
 matrix:
 	mkdir -p dist
-	for t in x86_64 aarch64 i386; do \
-		zig cc -target $$t-linux-musl -O2 -static -Ivendor \
-			-o dist/cli-spy-$$t cli-spy.c seal.c vendor/tweetnacl.c \
-			-lm -lpthread; \
-	done
-	zig cc -target armv7l-linux-musleabihf -O2 -static -Ivendor \
+	zig cc -target x86_64-linux-musl -O2 -static -Ivendor \
+		-o dist/cli-spy-x86_64 cli-spy.c seal.c vendor/tweetnacl.c \
+		-lm -lpthread
+	zig cc -target aarch64-linux-musl -O2 -static -Ivendor \
+		-o dist/cli-spy-aarch64 cli-spy.c seal.c vendor/tweetnacl.c \
+		-lm -lpthread
+	zig cc -target x86-linux-musl -O2 -static -Ivendor \
+		-o dist/cli-spy-i386 cli-spy.c seal.c vendor/tweetnacl.c \
+		-lm -lpthread
+	zig cc -target arm-linux-musleabihf -O2 -static -Ivendor \
 		-o dist/cli-spy-armv7l cli-spy.c seal.c vendor/tweetnacl.c \
 		-lm -lpthread
 
