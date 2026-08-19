@@ -1,5 +1,5 @@
 # cli-spy
-
+ 
 Unprivileged, passive Linux monitor that watches `/proc/*/cmdline` (and optionally
 `environ`) for credentials and tokens exposed as command-line arguments.
 
