@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build release binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Build release binaries
+        run: make matrix
+
+      - name: Show binaries
+        run: |
+          file dist/*
+          ls -lh dist/
+
+      - name: Package binaries
+        run: |
+          set -euo pipefail
+
+          cd dist
+
+          for binary in cli-spy-*; do
+            tar -czf "${binary}.tar.gz" "${binary}"
+          done
+
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+
+          cd dist
+          sha256sum *.tar.gz > SHA256SUMS
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "cli-spy ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            dist/*.tar.gz \
+            dist/SHA256SUMS
