@@ -1,0 +1,66 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build cli-spy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Build normal binary
+        run: make
+
+      - name: Install Zig
+        uses: xyzzylabs/setup-zig@v1
+        with:
+          version: 0.16.0
+
+      - name: Build Linux release matrix
+        run: make matrix
+
+      - name: Inspect binaries
+        run: |
+          file dist/*
+          ls -lh dist/
+
+      - name: Package binaries
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+
+          cd dist
+
+          for binary in cli-spy-*; do
+            tar -czf "${binary}.tar.gz" "${binary}"
+          done
+
+      - name: Generate checksums
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+
+          cd dist
+          sha256sum *.tar.gz > SHA256SUMS
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
