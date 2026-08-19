@@ -1,0 +1,5 @@
+*.o
+cli-spy
+dist/
+*.sk
+*.pk
