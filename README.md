@@ -1,7 +1,7 @@
 # cli-spy
 
 Unprivileged, passive Linux monitor that watches `/proc/*/cmdline` (and optionally
-`environ`) for credentials and tokens exposed as command-line arguments. 
+`environ`) for credentials and tokens exposed as command-line arguments.
 
 Single static C binary, zero runtime dependencies, no root required.
 
@@ -9,7 +9,7 @@ Single static C binary, zero runtime dependencies, no root required.
 > tool. Run it only on systems you own or are explicitly authorized to test. Its
 > purpose is to *demonstrate and measure* a known OS-level exposure so you can
 > build detections and harden against it, not to harvest credentials you have no
-> right to. 
+> right to.
 
 ## Why this exists
 
@@ -17,10 +17,10 @@ Passing secrets on the command line (`mysql -p<pass>`, `curl -u user:pass`,
 `--token=...`) is world-readable: any local user can read any process's argv via
 `/proc/<pid>/cmdline` (mode 0444). The usual alternative, environment variables,
 are *not* world-readable (`/proc/<pid>/environ` is 0400) which is exactly why
-"just use env vars" is the standard advice. cli-spy demonstrates the exposure by silently 
-capturing argv secrets as an unprivileged user, and optionally exfiltrating them. 
-This can be useful in CTFs or authorized engagements when LPE is seemingly exhausted but a 
-lazy script or careless root user broadcasts something you can pivot with on their command line.  
+"just use env vars" is the standard advice. cli-spy demonstrates the exposure by silently
+capturing argv secrets as an unprivileged user, and optionally exfiltrating them.
+This can be useful in CTFs or authorized engagements when LPE is seemingly exhausted but a
+lazy script or careless root user broadcasts something you can pivot with on their command line.
 Inspired by pspy, but built to be more lightweight.
 
 ## Features
