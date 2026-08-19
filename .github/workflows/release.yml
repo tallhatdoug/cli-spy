@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   release:
-    name: Build release binaries
     runs-on: ubuntu-latest
 
     steps:
@@ -22,10 +21,10 @@ jobs:
         with:
           version: 0.16.0
 
-      - name: Build release binaries
+      - name: Build Linux binaries
         run: make matrix
 
-      - name: Show binaries
+      - name: Inspect binaries
         run: |
           file dist/*
           ls -lh dist/
@@ -33,7 +32,6 @@ jobs:
       - name: Package binaries
         run: |
           set -euo pipefail
-
           cd dist
 
           for binary in cli-spy-*; do
@@ -42,17 +40,13 @@ jobs:
 
       - name: Generate checksums
         run: |
-          set -euo pipefail
-
           cd dist
           sha256sum *.tar.gz > SHA256SUMS
 
       - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "cli-spy ${GITHUB_REF_NAME}" \
-            --generate-notes \
-            dist/*.tar.gz \
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
             dist/SHA256SUMS
