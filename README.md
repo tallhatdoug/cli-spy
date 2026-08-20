@@ -102,7 +102,10 @@ Sophisticated administrators will be well-aware of this vector and enable hidepi
 -e env scanning only reads processes owned by the same UID (environ is 0400); it can't read other users' environments without root. 
 
 Some binaries defend themselves by overwriting the secret in their own argv microseconds after reading it (sshpass blanks it; mysql/mariadb fills with x). cli-spy's grace-window rescanning races that scrub. 
-At 10ms polling (lower has basically unavoidable jitter with diminishing returns) you may only catch 5-10% of actual SSH plaintext creds put on a command line because the scrub is incredibly fast. For MySQL your odds improve dramatically, even though it scrubs it to 1 character quite quickly, it isn't as fast as SSH so you will catch the majority of incidents. Things like curl have no post-execution scrub, and furthermore have latency overhead, so you will catch 99.99% of incidents.  
+
+At 10ms polling (lower has basically unavoidable jitter with diminishing returns) you may only catch 5-10% of actual SSH plaintext creds put on a command line because the scrub is incredibly fast. 
+For MySQL your odds improve dramatically, even though it scrubs it to 1 character quite quickly, it isn't as fast as SSH so you will catch the majority of incidents. 
+Things like curl have no post-execution scrub, and furthermore have latency overhead, so you will catch 99.99% of incidents.  
 (cli-spy also filters the 1-char scrub residue (mysql -px → x) so missed scrubs don't produce false-positive noise, which is nice)
 
 ## Detection / hardening against this type of tool:
