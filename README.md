@@ -21,18 +21,20 @@ are *not* world-readable (`/proc/<pid>/environ` is 0400) which is exactly why
 capturing argv secrets as an unprivileged user, and optionally exfiltrating them.
 This can be useful in CTFs or authorized engagements when LPE is seemingly exhausted but a
 lazy script or careless root user broadcasts something you can pivot with on their command line.
+
 Inspired by pspy, but built to be more lightweight.
 
 ## Features
 
 - **Unprivileged**: runs as any user; no root, no capabilities, no ptrace.
-- **Zero dependencies**: static musl binary (~100 KB), runs on any modern Linux
+- **Zero dependencies**: static binary, runs on any modern Linux
   (Debian, Ubuntu, Fedora, Arch, …) regardless of installed libraries.
 - **26 detection rules**: binary-scoped CLIs (mysql, sshpass, docker, redis-cli,
   smbclient, vault, az, aws, htpasswd, mosquitto, k6, openssl, twine, curl) plus
   token-format rules (AWS, GitHub, GitLab, Slack, Stripe, Twilio, OpenAI, Google,
   Vault HVS, JWT) plus a generic `--password/--token/--api-key` catch-all and a
-  Shannon-entropy fallback.
+  Shannon-entropy fallback. 
+- **Lightweight**: <1MB binary on x86_64, <2mb overall. 
 - **Confidence scoring**: every finding carries a 0–100 confidence.
 - **Grace-window rescanning**: new PIDs are rescanned for their first few sweeps,
   dramatically improving capture of short-lived and argv-scrubbing processes.
@@ -81,17 +83,8 @@ target side:
  "cmdline":"mysql -u root -pHunter2! -h 127.0.0.1 -e select 1"}
 ```
 
-
-Some binaries defend themselves by overwriting the secret in their own argv microseconds after reading it (sshpass blanks it; mysql/mariadb fills with x). cli-spy's grace-window rescanning races that scrub:
-Tool    Pre-scrub window        Catch rate @ 10 ms
-mysql / mariadb -p      ~2–5 ms ~80%
-sshpass -p      microseconds    ~5%
-
-cli-spy also filters the 1-char scrub residue (mysql -px → x) so missed scrubs don't produce false-positive noise.
-
-
 ## Exfil security model
-Exfiltration encrypts the payload, not the pipe. Each finding is sealed to a fresh ephemeral keypair against the operator's baked-in public key (X25519 + XSalsa20-Poly1305 via TweetNaCl). 
+Exfiltration encrypts the payload, not the pipe. Each finding is sealed to a fresh ephemeral keypair against the operator's baked-in public key (X25519 + XSalsa20-Poly1305 with the TweetNaCl crypto library). 
 
 Implications:
 The private key never exists on the target. 
@@ -107,6 +100,11 @@ argv scrubbing by well-behaved binaries (sshpass, mysql) shrinks the window to m
 but there is a massive luck factor, even with 10ms polling. 
 Sophisticated administrators will be well-aware of this vector and enable hidepid=2 on /proc which blinds unprivileged polling entirely.  
 -e env scanning only reads processes owned by the same UID (environ is 0400); it can't read other users' environments without root. 
+Some binaries defend themselves by overwriting the secret in their own argv microseconds after reading it (sshpass blanks it; mysql/mariadb fills with x). cli-spy's grace-window rescanning races that scrub:
+Tool    Pre-scrub window        Catch rate @ 10 ms
+mysql / mariadb -p      ~2–5 ms ~80%
+sshpass -p      microseconds    ~5%
+(cli-spy also filters the 1-char scrub residue (mysql -px → x) so missed scrubs don't produce false-positive noise, however)
 
 ## Detection / hardening against this type of tool:
 Mount /proc with hidepid=2 to deny unprivileged argv visibility.
