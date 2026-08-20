@@ -100,6 +100,7 @@ argv scrubbing by well-behaved binaries (sshpass, mysql) shrinks the window to m
 but there is a massive luck factor, even with 10ms polling. 
 Sophisticated administrators will be well-aware of this vector and enable hidepid=2 on /proc which blinds unprivileged polling entirely.  
 -e env scanning only reads processes owned by the same UID (environ is 0400); it can't read other users' environments without root. 
+
 Some binaries defend themselves by overwriting the secret in their own argv microseconds after reading it (sshpass blanks it; mysql/mariadb fills with x). cli-spy's grace-window rescanning races that scrub:
 Tool    Pre-scrub window        Catch rate @ 10 ms
 mysql / mariadb -p      ~2–5 ms ~80%
